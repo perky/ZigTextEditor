@@ -1,0 +1,6 @@
+zig-cache
+*.exe
+*.pdb
+*.obj
+.DS_STORE
+.DS_Store
