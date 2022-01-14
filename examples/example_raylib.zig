@@ -3,14 +3,14 @@ const ray = @import("raylib");
 const TextEditor = @import("text_editor");
 const TextEditorRenderer = @import("text_editor_raylib_renderer.zig");
 
-pub fn main() anyerror!void 
+pub fn main() !void 
 {
     // Allocator.
     var allocator = std.heap.c_allocator;
 
     // Window.
     const screenSize = .{ .x = 600, .y = 800 };
-    ray.InitWindow(screenSize.x, screenSize.y, "Text Editor - Raylib");
+    ray.InitWindow(@intCast(i32, screenSize.x), @intCast(i32, screenSize.y), "Text Editor - Raylib");
     ray.SetTargetFPS(60);
     defer ray.CloseWindow();
 

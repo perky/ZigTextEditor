@@ -30,7 +30,7 @@ pub fn interface(draw_params: *const DrawParams, cursor_state: *CursorState) Tex
     };
 }
 
-fn cursorRect(cursor: TextEditor.Cursor, userdata: *const anyopaque) TextEditor.RectangleInt
+fn cursorRect(col: i32, row: i32, userdata: *const anyopaque) TextEditor.RectangleInt
 {
     const params = TextEditor.castUserdata(DrawParams, userdata);
     const size = ray.MeasureTextEx(
@@ -42,8 +42,8 @@ fn cursorRect(cursor: TextEditor.Cursor, userdata: *const anyopaque) TextEditor.
     const width = @floatToInt(i32, size.x); 
     const height = params.font_size;
     return TextEditor.RectangleInt{
-        .x = params.x + (@intCast(i32, cursor.col) * (width + params.horizontal_spacing)),
-        .y = params.y + (@intCast(i32, cursor.row) * (height + params.vertical_spacing)),
+        .x = params.x + (col * (width + params.horizontal_spacing)),
+        .y = params.y + (row * (height + params.vertical_spacing)),
         .width = width,
         .height = height
     };
@@ -68,12 +68,12 @@ fn drawCursorRect(
     }
 }
 
-fn drawGlyph(char: u8, rect: TextEditor.RectangleInt, userdata: *const anyopaque) void
+fn drawGlyph(char: u8, x: i32, y: i32, userdata: *const anyopaque) void
 {
     const params = TextEditor.castUserdata(DrawParams, userdata);
     const pos = .{
-        .x = @intToFloat(f32, rect.x),
-        .y = @intToFloat(f32, rect.y),
+        .x = @intToFloat(f32, x),
+        .y = @intToFloat(f32, y),
     };
     ray.DrawTextCodepoint(
         params.font, 

@@ -32,6 +32,17 @@ pub fn init(in_allocator: std.mem.Allocator, comptime max_buffer_size: usize) !E
     return editor;
 }
 
+pub fn initC(in_allocator: std.mem.Allocator, comptime max_buffer_size: usize) !*Editor
+{
+    var editor = try in_allocator.create(Editor);
+    editor.allocator = in_allocator;
+    editor.buf = try in_allocator.alloc(u8, max_buffer_size);
+    editor.buf[0] = 0;
+    editor.eof = 0;
+    editor.cursor = Cursor{ .idx = 0, .row = 0, .col = 0 };
+    return editor;
+}
+
 pub fn deinit(self: *Editor) void
 {
     self.allocator.free(self.buf);
@@ -254,9 +265,9 @@ fn isCursorAtEndOfLine(self: *const Editor, cursor: *Cursor) bool
 
 
 ///! Rendering Interface.
-const DrawGlyphSignature = fn (char: u8, rect: RectangleInt, userdata: *const anyopaque) void;
-const CursorRectSignature = fn (cursor: Cursor, userdata: *const anyopaque) RectangleInt;
-const DrawCursorRectSignature = fn (rect: RectangleInt, mutable_userdata: *anyopaque, userdata: *const anyopaque) void;
+pub const DrawGlyphSignature = fn (char: u8, x: i32, y: i32, userdata: *const anyopaque) void;
+pub const CursorRectSignature = fn (col: i32, row: i32, userdata: *const anyopaque) RectangleInt;
+pub const DrawCursorRectSignature = fn (rect: RectangleInt, mutable_userdata: *anyopaque, userdata: *const anyopaque) void;
 pub const RendererInterface = struct {
     draw_glyph_fn: DrawGlyphSignature,
     cursor_rect_fn: CursorRectSignature,
@@ -267,7 +278,7 @@ pub const RendererInterface = struct {
 
 pub fn drawCursor(self: *const Editor, renderer: RendererInterface) void
 {
-    const rect = renderer.cursor_rect_fn(self.cursor, renderer.userdata);
+    const rect = renderer.cursor_rect_fn(@intCast(i32, self.cursor.col), @intCast(i32, self.cursor.row), renderer.userdata);
     renderer.draw_cursor_rect_fn(rect, renderer.mutable_userdata, renderer.userdata);
 }
 
@@ -283,18 +294,20 @@ pub fn drawBuffer(self: *const Editor, renderer: RendererInterface) void
             draw_cursor.col = 0;
             continue;
         }
-        const rect = renderer.cursor_rect_fn(draw_cursor, renderer.userdata);
-        renderer.draw_glyph_fn(char, rect, renderer.userdata);
+        const rect = renderer.cursor_rect_fn(@intCast(i32, draw_cursor.col), @intCast(i32, draw_cursor.row), renderer.userdata);
+        renderer.draw_glyph_fn(char, rect.x, rect.y, renderer.userdata);
         draw_cursor.col += 1;
     }
 }
 
 pub fn castUserdata(comptime T: type, userdata: *const anyopaque) *const T
 {
-    return @ptrCast(*const T, @alignCast(@alignOf(*T), userdata));
+    @setRuntimeSafety(false);
+    return @ptrCast(*const T, @alignCast(@alignOf(*const T), userdata));
 }
 
 pub fn castMutableUserdata(comptime T: type, mutable_userdata: *anyopaque) *T
 {
+    @setRuntimeSafety(false);
     return @ptrCast(*T, @alignCast(@alignOf(*T), mutable_userdata));
 }

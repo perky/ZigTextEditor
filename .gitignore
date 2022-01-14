@@ -1,5 +1,6 @@
 zig-cache
-examples/zig-cache/
+examples/zig-cache
+examples/zig-out
 *.exe
 *.pdb
 *.obj
